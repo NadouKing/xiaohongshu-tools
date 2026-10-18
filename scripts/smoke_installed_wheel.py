@@ -75,7 +75,7 @@ def main():
             text=True,
             encoding="utf-8",
         )
-        assert version.stdout.strip() == "0.1.0"
+        assert version.stdout.strip() == "0.1.1"
         assert invalid.returncode == 1 and invalid.stderr == ""
         assert json.loads(invalid.stdout)["error"]["code"] == "invalid_arguments"
         assert "fixture-secret" not in invalid.stdout
@@ -83,7 +83,7 @@ def main():
         json.dumps(
             {
                 "status": "passed",
-                "version": "0.1.0",
+                "version": "0.1.1",
                 "installedOutsideSource": True,
                 "consoleScript": True,
             }

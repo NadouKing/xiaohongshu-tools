@@ -6,14 +6,18 @@ PAGE_STATUS = r"""(() => {
   const visible = el => !!el && el.getBoundingClientRect().width > 0 &&
     el.getBoundingClientRect().height > 0;
   const text = document.body?.innerText || '';
+  const officialHost = ['xiaohongshu.com', 'www.xiaohongshu.com'].includes(location.hostname);
+  const verifyPath = officialHost && /^\/website-login\/captcha(?:\/|$)/.test(location.pathname);
+  const loginPath = officialHost && /^\/website-login\/?$/.test(location.pathname);
   const u = window.__INITIAL_STATE__?.user;
   const info = u?.userInfo?.value ?? u?.userInfo?._value ?? u?.userInfo;
   return {
     ready: document.readyState !== 'loading',
     loggedIn: !!document.querySelector('.main-container .user .link-wrapper .channel') ||
       !!(info && info.guest === false && (info.userId || info.user_id)),
-    loginRequired: visible(document.querySelector('.login-container')),
-    verificationRequired: [...document.querySelectorAll('[class*=captcha], [id*=captcha]')]
+    loginRequired: loginPath || visible(document.querySelector('.login-container')),
+    verificationRequired: verifyPath || [...document.querySelectorAll(
+      '[class*=captcha], [id*=captcha]')]
       .some(visible) || /安全验证|请完成验证|访问频繁/.test(text.slice(0, 2000)),
     searchEmpty: [...document.querySelectorAll(
       '.search-layout .no-result, .search-layout .empty, .search-result-empty')]
@@ -31,6 +35,22 @@ SEARCH_DATA = r"""(() => {
   const f = window.__INITIAL_STATE__?.search?.feeds;
   const items = f?.value ?? f?._value ?? f;
   return Array.isArray(items) ? JSON.parse(JSON.stringify(items)) : null;
+})()"""
+
+SEARCH_END = r"""(() => {
+  const unwrap = x => x?.value ?? x?._value ?? x;
+  const more = unwrap(window.__INITIAL_STATE__?.search?.hasMore);
+  if (typeof more === 'boolean') return !more;
+  return [...document.querySelectorAll(
+    '.search-layout .end-container, .feeds-container .end-container')]
+    .some(el => el.getBoundingClientRect().height > 0 &&
+      /到底了|没有更多|THE\s*END/i.test(el.innerText));
+})()"""
+
+SCROLL_SEARCH = r"""(() => {
+  const root = document.scrollingElement || document.documentElement;
+  window.scrollTo(0, root.scrollHeight);
+  return true;
 })()"""
 
 

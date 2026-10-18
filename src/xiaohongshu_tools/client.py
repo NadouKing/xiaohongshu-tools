@@ -198,8 +198,8 @@ class XiaohongshuClient:
     async def search(self, keyword: str, *, limit: int = 20, sort="综合", **platform_options):
         if not isinstance(keyword, str) or not keyword.strip() or len(keyword) > 100:
             raise XiaohongshuError("invalid_argument", "keyword 需要 1 到 100 个字符。")
-        if type(limit) is not int or not 1 <= limit <= 20:
-            raise XiaohongshuError("invalid_argument", "搜索 limit 范围为 1 到 20。")
+        if type(limit) is not int or not 1 <= limit <= 50:
+            raise XiaohongshuError("invalid_argument", "搜索 limit 范围为 1 到 50。")
         if platform_options:
             raise XiaohongshuError("unsupported_option", "当前版本不支持这些搜索选项。")
         if sort not in {"综合", "最新", "最多点赞", "最多评论", "最多收藏"}:
@@ -214,13 +214,76 @@ class XiaohongshuClient:
             if sort != "综合":
                 await self._sort(s, sort)
                 raw = await self._wait(s, scripts.SEARCH_DATA, allow_empty=True)
-            items = search_items(raw, limit)
+            items, pagination = await self._search_pages(s, raw, limit)
             self._tokens.update(
                 {item["id"]: item["xsecToken"] for item in items if item["xsecToken"]}
             )
             return self._envelope(
-                {"items": items, "count": len(items), "hasMore": None, "sort": sort}, started
+                {"items": items, "count": len(items), "sort": sort, **pagination},
+                started,
+                "cdp.page_state+bounded_search_scroll"
+                if pagination["scrolls"]
+                else "cdp.page_state",
             )
+
+    async def _search_pages(self, session, raw, limit):
+        """Keep the <=20 first-batch contract; explicitly bounded loading above it."""
+        collected = search_items(raw, 1000)
+        seen = {item["id"] for item in collected}
+        scrolls = stagnant = 0
+        ended = False
+        stop = "first_batch" if limit <= 20 else "scroll_limit"
+        if raw == []:
+            return [], {
+                "hasMore": False,
+                "requestedLimit": limit,
+                "loadedCount": 0,
+                "scrolls": 0,
+                "stopReason": "end_of_results",
+            }
+        deadline = time.monotonic() + min(self.timeout, 18)
+        while limit > 20 and len(collected) < limit and scrolls < 8:
+            if time.monotonic() >= deadline:
+                stop = "deadline"
+                break
+            ended = bool(await self.browser.evaluate(scripts.SEARCH_END, session))
+            if ended:
+                stop = "end_of_results"
+                break
+            await self.browser.evaluate(scripts.SCROLL_SEARCH, session)
+            scrolls += 1
+            previous = len(collected)
+            poll_until = min(deadline, time.monotonic() + 2)
+            while time.monotonic() < poll_until:
+                await asyncio.sleep(0.25)
+                status = await self.browser.evaluate(scripts.PAGE_STATUS, session) or {}
+                if status.get("verificationRequired"):
+                    raise VerificationRequired()
+                if status.get("loginRequired"):
+                    raise AuthenticationRequired()
+                batch = await self.browser.evaluate(scripts.SEARCH_DATA, session)
+                if isinstance(batch, list):
+                    for item in search_items(batch, 1000):
+                        if item["id"] not in seen:
+                            seen.add(item["id"])
+                            collected.append(item)
+                if len(collected) > previous:
+                    break
+            stagnant = stagnant + 1 if len(collected) == previous else 0
+            if stagnant >= 3:
+                stop = "no_progress"
+                break
+        if len(collected) >= limit:
+            stop = "requested_limit"
+        # Observed extra notes prove more; lack of progress does not prove exhaustion.
+        more = True if len(collected) > limit else False if ended else None
+        return collected[:limit], {
+            "hasMore": more,
+            "requestedLimit": limit,
+            "loadedCount": len(collected),
+            "scrolls": scrolls,
+            "stopReason": stop,
+        }
 
     async def _sort(self, session, sort):
         before = await self.browser.evaluate(scripts.SEARCH_DATA, session)
@@ -235,6 +298,11 @@ class XiaohongshuClient:
             raise XiaohongshuError("sort_unavailable", "无法应用排序，未返回伪装成已排序的结果。")
         deadline = time.monotonic() + min(self.timeout, 12)
         while time.monotonic() < deadline:
+            status = await self.browser.evaluate(scripts.PAGE_STATUS, session) or {}
+            if status.get("verificationRequired"):
+                raise VerificationRequired()
+            if status.get("loginRequired"):
+                raise AuthenticationRequired()
             current = await self.browser.evaluate(scripts.SEARCH_DATA, session)
             if current and current != before:
                 return

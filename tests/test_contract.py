@@ -125,7 +125,7 @@ def test_invalid_inputs_fail_before_browser_launch():
         client = XiaohongshuClient(chrome_path="missing")
         for invocation in (
             client.search("", limit=20),
-            client.search("coffee", limit=21),
+            client.search("coffee", limit=51),
             client.search("coffee", sort="incorrect"),
             client.detail("../../file"),
             client.detail(NOTE, comment_limit=101),
