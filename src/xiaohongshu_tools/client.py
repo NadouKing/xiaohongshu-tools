@@ -266,37 +266,42 @@ class XiaohongshuClient:
                 "stopReason": "end_of_results",
             }
         deadline = time.monotonic() + min(self.timeout, 18)
-        while limit > 20 and len(collected) < limit and scrolls < 8:
-            if time.monotonic() >= deadline:
-                stop = "deadline"
-                break
-            ended = bool(await self.browser.evaluate(scripts.SEARCH_END, session))
-            if ended:
-                stop = "end_of_results"
-                break
-            await self.browser.evaluate(scripts.SCROLL_SEARCH, session)
-            scrolls += 1
-            previous = len(collected)
-            poll_until = min(deadline, time.monotonic() + 2)
-            while time.monotonic() < poll_until:
-                await asyncio.sleep(0.25)
-                status = await self.browser.evaluate(scripts.PAGE_STATUS, session) or {}
-                if status.get("verificationRequired"):
-                    raise VerificationRequired()
-                if status.get("loginRequired"):
-                    raise AuthenticationRequired()
-                batch = await self.browser.evaluate(scripts.SEARCH_DATA, session)
-                if isinstance(batch, list):
-                    for item in search_items(batch, 1000):
-                        if item["id"] not in seen:
-                            seen.add(item["id"])
-                            collected.append(item)
-                if len(collected) > previous:
-                    break
-            stagnant = stagnant + 1 if len(collected) == previous else 0
-            if stagnant >= 3:
-                stop = "no_progress"
-                break
+        try:
+            # Include in-flight page probes in the loading budget, not only loop starts.
+            async with asyncio.timeout(min(self.timeout, 18)):
+                while limit > 20 and len(collected) < limit and scrolls < 8:
+                    if time.monotonic() >= deadline:
+                        stop = "deadline"
+                        break
+                    ended = bool(await self.browser.evaluate(scripts.SEARCH_END, session))
+                    if ended:
+                        stop = "end_of_results"
+                        break
+                    await self.browser.evaluate(scripts.SCROLL_SEARCH, session)
+                    scrolls += 1
+                    previous = len(collected)
+                    poll_until = min(deadline, time.monotonic() + 2)
+                    while time.monotonic() < poll_until:
+                        await asyncio.sleep(0.25)
+                        status = await self.browser.evaluate(scripts.PAGE_STATUS, session) or {}
+                        if status.get("verificationRequired"):
+                            raise VerificationRequired()
+                        if status.get("loginRequired"):
+                            raise AuthenticationRequired()
+                        batch = await self.browser.evaluate(scripts.SEARCH_DATA, session)
+                        if isinstance(batch, list):
+                            for item in search_items(batch, 1000):
+                                if item["id"] not in seen:
+                                    seen.add(item["id"])
+                                    collected.append(item)
+                        if len(collected) > previous:
+                            break
+                    stagnant = stagnant + 1 if len(collected) == previous else 0
+                    if stagnant >= 3:
+                        stop = "no_progress"
+                        break
+        except TimeoutError:
+            stop = "deadline"
         if len(collected) >= limit:
             stop = "requested_limit"
         # Observed extra notes prove more; lack of progress does not prove exhaustion.

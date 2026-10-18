@@ -171,6 +171,31 @@ def test_deadline_returns_partial_and_keeps_exhaustion_unknown():
     asyncio.run(run())
 
 
+@pytest.mark.parametrize("slow_probe", [scripts.SEARCH_END, scripts.SCROLL_SEARCH])
+def test_deadline_cancels_inflight_probe_and_preserves_loaded_notes(slow_probe):
+    class SlowPage(SearchPage):
+        cancelled = False
+
+        async def evaluate(self, expression, session):
+            if expression == slow_probe:
+                try:
+                    await asyncio.sleep(1)
+                except asyncio.CancelledError:
+                    self.cancelled = True
+                    raise
+            return await super().evaluate(expression, session)
+
+    async def run():
+        client = XiaohongshuClient(timeout=0.02)
+        client.browser = SlowPage()
+        items, meta = await client._search_pages("fixture", notes(0, 20), 30)
+        assert client.browser.cancelled is True
+        assert len(items) == 20
+        assert meta["stopReason"] == "deadline" and meta["hasMore"] is None
+
+    asyncio.run(run())
+
+
 def test_gate_during_pagination_is_not_reported_as_empty_or_exhausted():
     async def run():
         client = XiaohongshuClient()
