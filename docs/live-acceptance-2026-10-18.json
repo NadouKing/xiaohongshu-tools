@@ -1,0 +1,37 @@
+{
+  "checkedAt": "2026-10-18T12:51:05.532750+00:00",
+  "runtime": "Python native CDP, installed Chrome, no Go service",
+  "keyword": "广州 文冲 幸福里",
+  "details": [
+    {
+      "id": "682415b0000000002001f472",
+      "title": "广州文冲幸福里旅游攻略‼️历史文化街区",
+      "bodyCharacters": 899,
+      "commentSampleCount": 7,
+      "commentsHasMore": false,
+      "commentScope": "bounded_top_level_sample",
+      "commentMethod": "page_state",
+      "elapsedMs": 2284
+    },
+    {
+      "id": "6a22da470000000016026afe",
+      "title": "幸福里｜5号线直达！800年古村爆改3A景区🏮",
+      "bodyCharacters": 859,
+      "commentSampleCount": 2,
+      "commentsHasMore": false,
+      "commentScope": "bounded_top_level_sample",
+      "commentMethod": "dom",
+      "elapsedMs": 1617
+    }
+  ],
+  "session": {
+    "state": "ready",
+    "authenticated": true
+  },
+  "search": {
+    "count": 8,
+    "elapsedMs": 1998,
+    "method": "cdp.page_state"
+  },
+  "passed": true
+}

@@ -1,0 +1,30 @@
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "xiaohongshu-tools"
+version = "0.1.0"
+description = "Read-only Xiaohongshu research through a local Chrome CDP session"
+readme = "README.md"
+requires-python = ">=3.14"
+license = "MIT"
+dependencies = ["websockets>=15,<18"]
+
+[project.scripts]
+xhs = "xiaohongshu_tools.cli:main"
+
+[dependency-groups]
+dev = ["pytest>=8.4,<10", "ruff>=0.12,<1"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py314"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
