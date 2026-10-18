@@ -21,4 +21,5 @@ jobs:
       - run: uv run --locked ruff check .
       - run: uv run --locked pytest -q
       - run: uv build
+      - run: uv run --locked python scripts/smoke_installed_wheel.py dist/xiaohongshu_tools-0.1.1-py3-none-any.whl
       - run: git diff --check

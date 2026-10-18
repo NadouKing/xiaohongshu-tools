@@ -50,8 +50,14 @@ def main():
                 str(python),
                 "-I",
                 "-c",
+                "import importlib.util; from pathlib import Path; "
+                "import sys; import xiaohongshu_tools; "
                 "from xiaohongshu_tools import XiaohongshuClient; "
-                "assert XiaohongshuClient().browser is None",
+                "assert XiaohongshuClient().browser is None; "
+                "assert Path(xiaohongshu_tools.__file__).resolve().is_relative_to("
+                "Path(sys.prefix).resolve()); "
+                "assert importlib.util.find_spec('lazy_trip') is None; "
+                "assert importlib.util.find_spec('dazhongdianping_tools') is None",
             ],
             cwd=root,
             env=environment,
@@ -86,6 +92,8 @@ def main():
                 "version": "0.1.1",
                 "installedOutsideSource": True,
                 "consoleScript": True,
+                "independentInstall": True,
+                "browserStarted": False,
             }
         )
     )

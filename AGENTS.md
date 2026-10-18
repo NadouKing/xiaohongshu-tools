@@ -21,6 +21,4 @@ No posting, liking, following, comments, account edits, CAPTCHA bypass or generi
 
 Run `uv run ruff check .`, `uv run ruff format --check .`, `uv run pytest`, then build a wheel and run the directory-external installed-wheel smoke. Add behavioral checks for parsing, redaction, ownership, bounds and error handling. Network/browser acceptance is opt-in and must report what was actually read, including comment scope. Release notes must distinguish tested Windows behavior from merely implemented cross-platform branches.
 
-Update README/API documentation together with contract changes. Keep JSON schemaVersion=1 backward compatible within 0.1.x. Independent repos share the integrating application's environment; no runtime dependency on other repository source paths.
-
-These practices adapt seller-ops-automation's engineering structure; its commerce, Ziniao, Feishu, deployment destinations and business rules do not apply here.
+Update README/API documentation together with contract changes. Keep JSON schemaVersion=1 backward compatible within 0.1.x. The library and CLI must install and work alone; sharing an integrating application's environment is optional. Business adaptation belongs in the consumer. No runtime dependency on other repository source paths.

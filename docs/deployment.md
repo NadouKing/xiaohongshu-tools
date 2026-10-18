@@ -21,4 +21,4 @@ Typical failures:
 | `page_data_unavailable` | Confirm login and note availability; selectors/state may need updating. |
 | `sort_refresh_timeout` | Retry; stale results are not returned under a false sort label. |
 
-No service needs to run permanently. The integrating application's environment should install all tool packages once and directly import them. The Chrome binary and the local login profile are external prerequisites, not bundled runtime dependencies.
+No service needs to run permanently. The library and CLI both work with this repository's environment alone. A consuming application may instead install this package into its own environment and import it directly; it owns business adaptation. The Chrome binary and local login profile are external prerequisites, not bundled runtime dependencies.
