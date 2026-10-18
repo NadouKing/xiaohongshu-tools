@@ -1,0 +1,90 @@
+{
+  "scope": "standalone library/CLI and cold-start read acceptance",
+  "testedCodeSha": "3d531ede8144a87e13eddf56414c853d74a44ee1",
+  "localTests": 29,
+  "isolatedWheelSmoke": {
+    "passed": true,
+    "consumerInstalled": false,
+    "otherPlatformInstalled": false
+  },
+  "live": {
+    "type": "independent-installed-read-only-acceptance",
+    "startedAt": "2026-10-18T14:15:20.335604+00:00",
+    "testedCodeSha": "3d531ede8144a87e13eddf56414c853d74a44ee1",
+    "python": "3.14.8",
+    "package": "xiaohongshu-tools",
+    "version": "0.1.1",
+    "wheelSha256": "936f180e885fde6602c4b4ce6744506c3f3394f28d0412981580563760947f0d",
+    "installedOutsideSource": true,
+    "consumerInstalled": false,
+    "otherPlatformInstalled": false,
+    "pythonIsolation": true,
+    "configuration": "explicit dedicated profile; no Trip configuration",
+    "cli": {
+      "command": "search --limit 5",
+      "count": 5,
+      "elapsedMs": 2940,
+      "publicOutputRedacted": true,
+      "detail": {
+        "id": "682415b0000000002001f472",
+        "bodyCharacters": 899,
+        "commentSampleCount": 3,
+        "elapsedMs": 2876
+      }
+    },
+    "session": {
+      "state": "ready",
+      "authenticated": true
+    },
+    "library": {
+      "searchCount": 8,
+      "searchElapsedMs": 2087,
+      "details": [
+        {
+          "id": "682415b0000000002001f472",
+          "bodyCharacters": 899,
+          "commentSampleCount": 3,
+          "commentScope": "bounded_top_level_sample",
+          "elapsedMs": 2388
+        },
+        {
+          "id": "6a22da470000000016026afe",
+          "bodyCharacters": 859,
+          "commentSampleCount": 2,
+          "commentScope": "bounded_top_level_sample",
+          "elapsedMs": 2304
+        }
+      ]
+    },
+    "completedAt": "2026-10-18T14:15:37.289502+00:00",
+    "passed": true,
+    "browserClosed": true
+  },
+  "regression": {
+    "beforeSha": "114011ac8da9a18e0a23339649a2f8469af92b56",
+    "before": "cold CLI search failed with cdp_timeout in Page.navigate",
+    "after": "homepage session initialization once per browser, then deep-link reads",
+    "evidenceLimit": "Changing URL encoding or optional parameters alone did not fix cold navigation. Server internals are not established.",
+    "fixtures": "concurrent one-time initialization, reset on close, auth/verification gates, special-character keyword round trips"
+  },
+  "date": "2026-10-18",
+  "timezone": "UTC",
+  "python": "3.14.8",
+  "localChecks": [
+    "ruff",
+    "pytest",
+    "build",
+    "git diff --check",
+    "outside-source wheel"
+  ],
+  "limitations": [
+    "Windows live only",
+    "read-only bounded samples",
+    "no map/weather query this change"
+  ],
+  "candidateProvenanceScan": {
+    "trackedFiles": 0,
+    "wheel": 0,
+    "sdist": 0
+  }
+}

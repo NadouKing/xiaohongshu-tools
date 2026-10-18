@@ -107,3 +107,5 @@ uv run python scripts/live_acceptance.py --output private/live-acceptance.json
 更多见 [架构](docs/architecture.md)、[部署](docs/deployment.md)、[环境](docs/environment.md)。
 
 每次改动按[开发与 PR 交付](docs/development-delivery.md)建分支、验证并提交草稿 PR；审查见[处理规则](docs/review.md)。本轮借鉴范围、上游状态与暂缓项见[上游维护检查](docs/upstream-review-2026-10-18.md)。
+
+独立安装、冷启动修复及本轮真实 CLI/库读取范围见[独立性验收](docs/standalone-acceptance-2026-10-18.json)。
