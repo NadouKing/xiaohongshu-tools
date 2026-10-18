@@ -17,8 +17,8 @@ Async public methods return schemaVersion=1 envelopes. The source is `xiaohongsh
 
 Access tokens from search are ephemeral library results or CLI-private cache entries. Public URLs are canonical note URLs; CLI serialization removes tokens and query strings recursively. The main application must apply equivalent filtering before saving library results.
 
-Search is a first-page sample of up to 20 notes. Comment retrieval is a maximum of 100 primary comments, with a 12-second loading budget and stagnation stop. Replies are not expanded. `commentsHasMore` describes additional primary-comment sampling where observable, not complete coverage. `commentScope` remains `bounded_top_level_sample` even if the page reports its end.
+Search defaults to a first-page sample of up to 20 notes. Explicit limits above 20 enable loading up to 50 unique notes, at most 8 scrolls and an 18-second extra loading budget, with 3 stagnant rounds stopping early. `stopReason`, `loadedCount` and nullable `hasMore` distinguish bounds from confirmed exhaustion. Official verification/login redirect paths are checked before consuming page data. Comment retrieval is a maximum of 100 primary comments, with a 12-second loading budget and stagnation stop. Replies are not expanded. `commentsHasMore` describes additional primary-comment sampling where observable, not complete coverage. `commentScope` remains `bounded_top_level_sample` even if the page reports its end.
 
 ## Extension order
 
-First maintain reliable search/detail/comments and errors. Then benchmark representative cold/warm calls before pursuing page-function or HTTP shortcuts. Add any new official interface as a separately verified path. Video transcription, full pagination, publishing and a remote MCP service are outside v0.1.
+First maintain reliable search/detail/comments and errors. Then benchmark representative cold/warm calls before pursuing page-function or HTTP shortcuts. Add any new official interface as a separately verified path. Video transcription, resumable full pagination, publishing and a remote MCP service remain outside v0.1. See the upstream review for selected and deferred patches.

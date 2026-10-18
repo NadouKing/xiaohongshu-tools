@@ -2,7 +2,7 @@
 
 Python 3.14 的小红书只读采集库与 `xhs` CLI。通过本机 Chrome 的原生 CDP 读取已登录网页，供出行研究、脚本和 AI 编排使用。
 
-当前支持：登录状态、可见浏览器扫码登录、首屏搜索、笔记正文、有上限的一级评论样本。无需 Go 服务、Node、Playwright 或独立大模型 API。**它不是小红书官方 API。**
+当前支持：登录状态、可见浏览器扫码登录、有界搜索、笔记正文、有上限的一级评论样本。无需 Go 服务、Node、Playwright 或独立大模型 API。**它不是小红书官方 API。**
 
 ## 安装
 
@@ -13,6 +13,7 @@ uv sync --locked
 uv run xhs --version
 uv run xhs login
 uv run xhs search "广州 文冲 幸福里" --limit 8
+uv run xhs search "广州 黄埔 周末" --limit 30
 uv run xhs detail 682415b0000000002001f472 --comment-limit 10
 ```
 
@@ -62,13 +63,14 @@ asyncio.run(main())
 
 - `check_session().data`：`state=ready|login_required|verification_required` 和 `authenticated`。
 - `search().data.items`：`id,title,url,type,author,xsecToken`。访问 token 仅供库调用方在私有内存中衔接详情；公开输出必须过滤。
+- `search(limit=1..50)`：默认 `20` 保留首屏行为；大于 `20` 时最多滚动 `8` 轮，追加加载预算最多 `18` 秒，连续 `3` 轮无新增就停止。返回 `requestedLimit/loadedCount/scrolls/stopReason/hasMore`；达到时间或滚动边界可能少于请求量，未知是否到底时 `hasMore=null`。
 - `detail().data`：`id,title,body,url,publishedAt,comments,commentSampleCount,commentsHasMore,commentScope`，另有评论获取路径与上限。
 - `commentsHasMore=null` 表示无法判断；`false` 也不表示所有楼中楼均已读取。`commentScope` 始终明确为有界一级评论样本，`comment_limit=0` 时是 `not_requested`。
 - 失败抛出 `XiaohongshuError` 子类，其 `code` 稳定且消息经过简化。CLI 输出 JSON 错误、非零退出，不打印网页、CDP 原始错误或凭据。
 
 ## 实现与边界
 
-原生 WebSocket CDP → Chrome 页面导航 → 应用 `__INITIAL_STATE__`；评论状态缺失时读取已渲染的评论元素，并做有界滚动。搜索首屏最多 20 条，评论最多 100 条，默认 20。排序通过现有页面控件应用，刷新未完成会显式报错。
+原生 WebSocket CDP → Chrome 页面导航 → 应用 `__INITIAL_STATE__`；评论状态缺失时读取已渲染的评论元素，并做有界滚动。搜索默认首屏 20 条，主动请求可有界加载至 50 条；评论最多 100 条，默认 20。排序通过现有页面控件应用，刷新未完成会显式报错。官方 `/website-login/captcha` 跳转会明确返回 `verification_required`，不当作空结果或仅等待超时；仍需人工完成验证。
 
 没有重写签名算法、验证码绕过或通用 HTTP 抓取代理。没有发帖、点赞、评论、关注等账号写入。站点验证、登录失效、笔记删除和页面改版会影响可用性；工具显式报告错误，不伪造结果。
 
@@ -81,7 +83,7 @@ uv run ruff check .
 uv run ruff format --check .
 uv run pytest
 uv build
-uv run python scripts/smoke_installed_wheel.py dist/xiaohongshu_tools-0.1.0-py3-none-any.whl
+uv run python scripts/smoke_installed_wheel.py dist/xiaohongshu_tools-0.1.1-py3-none-any.whl
 # 仅主动需要真实平台验收时运行：
 uv run python scripts/live_acceptance.py --output private/live-acceptance.json
 ```
@@ -91,3 +93,5 @@ uv run python scripts/live_acceptance.py --output private/live-acceptance.json
 参考了 [xpzouying/xiaohongshu-mcp](https://github.com/xpzouying/xiaohongshu-mcp) 的站点状态读取思路（Apache-2.0），本包独立实现 Python CDP；工程分层与安装产物验收借鉴 [seller-ops-automation](https://github.com/DouNineGo/seller-ops-automation)，不依赖该项目。
 
 更多见 [架构](docs/architecture.md)、[部署](docs/deployment.md)、[环境](docs/environment.md)。
+
+每次改动按[开发与 PR 交付](docs/development-delivery.md)建分支、验证并提交草稿 PR；审查见[处理规则](docs/review.md)。本轮借鉴范围、上游状态与暂缓项见[上游维护检查](docs/upstream-review-2026-10-18.md)。

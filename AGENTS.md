@@ -1,5 +1,7 @@
 # Repository scope
 
+Before any change, read `docs/development-delivery.md`; create/sync the task branch first. Every feature/fix needs relevant live read-only acceptance, updated evidence and a draft PR attached to the chat. Use `.github/PULL_REQUEST_TEMPLATE.md`, handle reviews with `docs/review.md`, and do not merge before the user's explicit request.
+
 This package is a read-only Xiaohongshu Python library and CLI. Target Python 3.14 (standard GIL build), uv, hatchling, src layout. Keep the installed package independent of local Codex paths, sibling repositories, Node, Go and model providers.
 
 ## Boundaries
