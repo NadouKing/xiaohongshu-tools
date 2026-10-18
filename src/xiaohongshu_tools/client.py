@@ -5,7 +5,7 @@ import time
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 from pathlib import Path
-from urllib.parse import urlencode
+from urllib.parse import quote, urlencode
 
 from . import scripts
 from .browser import Browser, default_profile, find_chrome
@@ -205,7 +205,10 @@ class XiaohongshuClient:
         if sort not in {"综合", "最新", "最多点赞", "最多评论", "最多收藏"}:
             raise XiaohongshuError("invalid_argument", "不支持该排序方式。")
         started = time.monotonic()
-        query = urlencode({"keyword": keyword.strip(), "source": "web_explore_feed"})
+        # Live multiword navigation stalled with form-style '+' spaces; use URI encoding.
+        query = urlencode(
+            {"keyword": keyword.strip(), "source": "web_explore_feed"}, quote_via=quote
+        )
         async with (
             self._operation_lock,
             self._page(f"https://www.xiaohongshu.com/search_result?{query}") as s,

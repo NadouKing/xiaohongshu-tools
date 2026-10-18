@@ -1,10 +1,40 @@
 import asyncio
 import json
+from contextlib import asynccontextmanager
+from urllib.parse import parse_qs, urlsplit
 
 import pytest
 
 from xiaohongshu_tools import VerificationRequired, XiaohongshuClient, XiaohongshuError, scripts
 from xiaohongshu_tools.browser import Browser, find_chrome
+
+
+@pytest.mark.parametrize("keyword", ["广州 文冲 幸福里", "C++ & coffee", "a/b #周末"])
+def test_search_url_preserves_keyword_without_form_style_spaces(keyword):
+    """Regression for live navigation stalls; literal +/&/# must remain keyword data."""
+
+    async def run():
+        client = XiaohongshuClient()
+        captured = []
+
+        @asynccontextmanager
+        async def page(url):
+            captured.append(url)
+            yield "fixture"
+
+        async def wait(*args, **kwargs):
+            return []
+
+        client._page = page
+        client._wait = wait
+        result = await client.search(keyword, limit=5)
+        url = urlsplit(captured[0])
+        assert url.hostname == "www.xiaohongshu.com" and url.path == "/search_result"
+        assert url.fragment == "" and "+" not in url.query and "%20" in url.query
+        assert parse_qs(url.query) == {"keyword": [keyword], "source": ["web_explore_feed"]}
+        assert result["data"]["count"] == 0
+
+    asyncio.run(run())
 
 
 def notes(start, stop):
