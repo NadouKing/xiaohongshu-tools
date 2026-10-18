@@ -72,6 +72,8 @@ class XiaohongshuClient:
         self.cookies_file = Path(cookies_file) if cookies_file else None
         self.browser = None
         self._operation_lock = asyncio.Lock()
+        self._bootstrap_lock = asyncio.Lock()
+        self._session_bootstrapped = False
         self._tokens = {}
 
     async def __aenter__(self):
@@ -161,6 +163,7 @@ class XiaohongshuClient:
             while time.monotonic() < deadline:
                 status = await self.browser.evaluate(scripts.PAGE_STATUS, s) or {}
                 if status.get("verificationRequired"):
+                    self._session_bootstrapped = False
                     return self._envelope(
                         {"state": "verification_required", "authenticated": False},
                         started,
@@ -173,6 +176,7 @@ class XiaohongshuClient:
                 raise XiaohongshuError(
                     "session_unknown", "页面未提供可确认的登录状态，请检查网络或页面适配。"
                 )
+            self._session_bootstrapped = bool(status.get("loggedIn"))
             return self._envelope(
                 {
                     "state": "ready" if status.get("loggedIn") else "login_required",
@@ -181,6 +185,22 @@ class XiaohongshuClient:
                 started,
                 "cdp.session_probe",
             )
+
+    async def _ensure_session(self):
+        # A cold deep-link navigation can stall before the site's homepage initializes.
+        # Probe once per browser, without replaying failed reads or weakening page gates.
+        async with self._bootstrap_lock:
+            if self._session_bootstrapped:
+                return
+            result = await self.check_session()
+            state = result["data"]["state"]
+            if state == "verification_required":
+                raise VerificationRequired()
+            if state == "login_required":
+                raise AuthenticationRequired()
+            if state != "ready":
+                raise XiaohongshuError("session_unknown", "无法确认小红书会话状态。")
+            self._session_bootstrapped = True
 
     async def login(self, *, wait_seconds=180):
         if self.headless:
@@ -205,7 +225,8 @@ class XiaohongshuClient:
         if sort not in {"综合", "最新", "最多点赞", "最多评论", "最多收藏"}:
             raise XiaohongshuError("invalid_argument", "不支持该排序方式。")
         started = time.monotonic()
-        # Live multiword navigation stalled with form-style '+' spaces; use URI encoding.
+        await self._ensure_session()
+        # Preserve spaces and literal '+' separately in the URI query.
         query = urlencode(
             {"keyword": keyword.strip(), "source": "web_explore_feed"}, quote_via=quote
         )
@@ -323,6 +344,7 @@ class XiaohongshuClient:
             raise XiaohongshuError("invalid_argument", "无效的笔记访问参数。")
         query = urlencode({"xsec_token": token, "xsec_source": "pc_feed"}) if token else ""
         started = time.monotonic()
+        await self._ensure_session()
         async with (
             self._operation_lock,
             self._page(canonical_url(ident) + ("?" + query if query else "")) as s,
@@ -391,6 +413,7 @@ class XiaohongshuClient:
         return normalize_comments(collected, limit), has_more, method
 
     async def close(self):
+        self._session_bootstrapped = False
         if self.browser:
             await self.browser.close()
             self.browser = None

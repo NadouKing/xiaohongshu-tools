@@ -5,16 +5,23 @@ from urllib.parse import parse_qs, urlsplit
 
 import pytest
 
-from xiaohongshu_tools import VerificationRequired, XiaohongshuClient, XiaohongshuError, scripts
+from xiaohongshu_tools import (
+    AuthenticationRequired,
+    VerificationRequired,
+    XiaohongshuClient,
+    XiaohongshuError,
+    scripts,
+)
 from xiaohongshu_tools.browser import Browser, find_chrome
 
 
 @pytest.mark.parametrize("keyword", ["广州 文冲 幸福里", "C++ & coffee", "a/b #周末"])
 def test_search_url_preserves_keyword_without_form_style_spaces(keyword):
-    """Regression for live navigation stalls; literal +/&/# must remain keyword data."""
+    """Literal +/&/# must remain keyword data rather than extra query/fragment fields."""
 
     async def run():
         client = XiaohongshuClient()
+        client._session_bootstrapped = True
         captured = []
 
         @asynccontextmanager
@@ -33,6 +40,54 @@ def test_search_url_preserves_keyword_without_form_style_spaces(keyword):
         assert url.fragment == "" and "+" not in url.query and "%20" in url.query
         assert parse_qs(url.query) == {"keyword": [keyword], "source": ["web_explore_feed"]}
         assert result["data"]["count"] == 0
+
+    asyncio.run(run())
+
+
+def test_cold_search_probes_homepage_before_deep_link_and_only_once():
+    async def run():
+        client = XiaohongshuClient()
+        events = []
+
+        async def probe():
+            events.append("homepage")
+            return {"data": {"state": "ready"}}
+
+        @asynccontextmanager
+        async def page(url):
+            events.append("search")
+            yield "fixture"
+
+        async def wait(*args, **kwargs):
+            return []
+
+        client.check_session = probe
+        client._page = page
+        client._wait = wait
+        await asyncio.gather(client._ensure_session(), client._ensure_session())
+        await client.search("first")
+        await client.search("second")
+        assert events == ["homepage", "search", "search"]
+        await client.close()
+        await client.search("after close")
+        assert events[-2:] == ["homepage", "search"]
+
+    asyncio.run(run())
+
+
+@pytest.mark.parametrize("state", ["login_required", "verification_required"])
+def test_bootstrap_gate_is_not_cached_or_followed_by_search(state):
+    async def run():
+        client = XiaohongshuClient()
+
+        async def probe():
+            return {"data": {"state": state}}
+
+        client.check_session = probe
+        expected = AuthenticationRequired if state == "login_required" else VerificationRequired
+        with pytest.raises(expected):
+            await client.search("test")
+        assert client._session_bootstrapped is False and client.browser is None
 
     asyncio.run(run())
 

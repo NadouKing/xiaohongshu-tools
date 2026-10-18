@@ -9,6 +9,8 @@ The client lazily launches a dedicated Chrome, with a loopback-only random CDP p
 
 The existing site's browser application performs signed network requests itself. The tool reads hydrated search/note state through `Runtime.evaluate`; if comment state is unavailable, it reads comment DOM text. A bounded scroll loop requests more through the site's own lazy loading. This avoids implementing volatile signing. It does not guarantee that plain HTTP would be unavailable or slower; neither an HTTP signature implementation nor comparative benchmark is claimed.
 
+Before the first search or detail on a browser instance, the client probes the normal homepage and requires a ready session. Current live acceptance reproduced a cold search deep-link navigation stall while homepage-first access succeeded. The probe is serialized and reused until close; each data page still checks current authentication/verification. There is no retry of failed reads, alternate identity or gate bypass. URI keyword encoding preserves literal plus signs and spaces; encoding alone did not resolve the cold-start failure.
+
 The page JavaScript is embedded Python string data included in the wheel and executed by Chrome. Node is not required. No HTML parsing library is required. Page state and DOM selectors remain subject to site changes, which surface as typed errors.
 
 ## Contracts
