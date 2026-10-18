@@ -27,7 +27,7 @@ def parser():
     commands.add_parser("session", help="检查登录状态")
     login = commands.add_parser("login", help="在可见浏览器扫码登录")
     login.add_argument("--wait-seconds", type=int, default=180)
-    search = commands.add_parser("search", help="搜索首屏笔记；stdout 不输出访问 token")
+    search = commands.add_parser("search", help="搜索笔记；limit>20时有界滚动，stdout 不输出 token")
     search.add_argument("keyword")
     search.add_argument("--limit", type=int, default=20)
     search.add_argument("--sort", default="综合")

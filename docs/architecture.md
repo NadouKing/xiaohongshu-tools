@@ -9,6 +9,8 @@ The client lazily launches a dedicated Chrome, with a loopback-only random CDP p
 
 The existing site's browser application performs signed network requests itself. The tool reads hydrated search/note state through `Runtime.evaluate`; if comment state is unavailable, it reads comment DOM text. A bounded scroll loop requests more through the site's own lazy loading. This avoids implementing volatile signing. It does not guarantee that plain HTTP would be unavailable or slower; neither an HTTP signature implementation nor comparative benchmark is claimed.
 
+Before the first search or detail on a browser instance, the client probes the normal homepage and requires a ready session. Current live acceptance reproduced a cold search deep-link navigation stall while homepage-first access succeeded. The probe is serialized and reused until close; each data page still checks current authentication/verification. There is no retry of failed reads, alternate identity or gate bypass. URI keyword encoding preserves literal plus signs and spaces; encoding alone did not resolve the cold-start failure.
+
 The page JavaScript is embedded Python string data included in the wheel and executed by Chrome. Node is not required. No HTML parsing library is required. Page state and DOM selectors remain subject to site changes, which surface as typed errors.
 
 ## Contracts
@@ -17,8 +19,8 @@ Async public methods return schemaVersion=1 envelopes. The source is `xiaohongsh
 
 Access tokens from search are ephemeral library results or CLI-private cache entries. Public URLs are canonical note URLs; CLI serialization removes tokens and query strings recursively. The main application must apply equivalent filtering before saving library results.
 
-Search is a first-page sample of up to 20 notes. Comment retrieval is a maximum of 100 primary comments, with a 12-second loading budget and stagnation stop. Replies are not expanded. `commentsHasMore` describes additional primary-comment sampling where observable, not complete coverage. `commentScope` remains `bounded_top_level_sample` even if the page reports its end.
+Search defaults to a first-page sample of up to 20 notes. Explicit limits above 20 enable loading up to 50 unique notes, at most 8 scrolls and an 18-second extra loading budget, with 3 stagnant rounds stopping early. `stopReason`, `loadedCount` and nullable `hasMore` distinguish bounds from confirmed exhaustion. Official verification/login redirect paths are checked before consuming page data. Comment retrieval is a maximum of 100 primary comments, with a 12-second loading budget and stagnation stop. Replies are not expanded. `commentsHasMore` describes additional primary-comment sampling where observable, not complete coverage. `commentScope` remains `bounded_top_level_sample` even if the page reports its end.
 
 ## Extension order
 
-First maintain reliable search/detail/comments and errors. Then benchmark representative cold/warm calls before pursuing page-function or HTTP shortcuts. Add any new official interface as a separately verified path. Video transcription, full pagination, publishing and a remote MCP service are outside v0.1.
+First maintain reliable search/detail/comments and errors. Then benchmark representative cold/warm calls before pursuing page-function or HTTP shortcuts. Add any new official interface as a separately verified path. Video transcription, resumable full pagination, publishing and a remote MCP service remain outside v0.1. See the upstream review for selected and deferred patches.

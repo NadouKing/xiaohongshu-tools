@@ -1,0 +1,80 @@
+{
+  "checkedAt": "2026-10-18T13:29:09.633107+00:00",
+  "timezone": "UTC",
+  "python": "3.14.8",
+  "packageVersion": "0.1.1",
+  "testedCodeCommit": "92e21d1d14e087519a2e26a2323e095985c7203b",
+  "searches": [
+    {
+      "keyword": "广州 文冲 幸福里",
+      "requestedLimit": 8,
+      "count": 8,
+      "sort": "综合",
+      "loadedCount": 20,
+      "scrolls": 0,
+      "stopReason": "requested_limit",
+      "hasMore": true,
+      "method": "cdp.page_state",
+      "elapsedMs": 2237,
+      "uniqueIds": true
+    },
+    {
+      "keyword": "广州 黄埔 周末",
+      "requestedLimit": 30,
+      "count": 30,
+      "sort": "综合",
+      "loadedCount": 40,
+      "scrolls": 1,
+      "stopReason": "requested_limit",
+      "hasMore": true,
+      "method": "cdp.page_state+bounded_search_scroll",
+      "elapsedMs": 2455,
+      "uniqueIds": true
+    },
+    {
+      "keyword": "广州 文冲幸福里 攻略",
+      "requestedLimit": 6,
+      "count": 6,
+      "sort": "最多收藏",
+      "loadedCount": 20,
+      "scrolls": 0,
+      "stopReason": "requested_limit",
+      "hasMore": true,
+      "method": "cdp.page_state",
+      "elapsedMs": 3173,
+      "uniqueIds": true
+    }
+  ],
+  "details": [
+    {
+      "id": "682415b0000000002001f472",
+      "bodyCharacters": 899,
+      "commentSampleCount": 7,
+      "commentsHasMore": false,
+      "commentScope": "bounded_top_level_sample",
+      "elapsedMs": 2884
+    },
+    {
+      "id": "6a22da470000000016026afe",
+      "bodyCharacters": 859,
+      "commentSampleCount": 2,
+      "commentsHasMore": false,
+      "commentScope": "bounded_top_level_sample",
+      "elapsedMs": 1992
+    }
+  ],
+  "errors": [],
+  "session": {
+    "state": "ready",
+    "authenticated": true
+  },
+  "browserReused": true,
+  "passed": true,
+  "browserClosed": true,
+  "gateRecognitionValidation": "real Chrome with synthetic URL fixture; no account challenge intentionally triggered",
+  "wheelSmoke": {
+    "version": "0.1.1",
+    "installedOutsideSource": true,
+    "passed": true
+  }
+}
