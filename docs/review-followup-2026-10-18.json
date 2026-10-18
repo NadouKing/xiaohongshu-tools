@@ -1,0 +1,47 @@
+{
+  "reviewedHead": "6288604d793e6c9bcce6d26b858bd33a7e8a8032",
+  "findings": [
+    {
+      "source": "Codex review",
+      "url": "https://github.com/NadouKing/xiaohongshu-tools/pull/1#discussion_r4307449646",
+      "conclusion": "confirmed",
+      "action": "Add uv run --locked ruff format --check . to CI"
+    },
+    {
+      "source": "local review",
+      "conclusion": "confirmed",
+      "problem": "The loading deadline was checked only between awaits; a slow probe exceeded the budget.",
+      "reproduction": {
+        "budgetSeconds": 0.01,
+        "slowProbeSeconds": 0.15,
+        "observedSeconds": 0.16
+      },
+      "action": "Bound the whole pagination loop with asyncio.timeout; cancel the pending probe and return loaded items with stopReason=deadline and hasMore=null.",
+      "codeSha": "a46387996009117b895b100a601718fc8cf81edc"
+    }
+  ],
+  "checks": {
+    "python": "3.14.8",
+    "pytest": 31,
+    "ruff": "passed",
+    "format": "passed",
+    "diff": "passed"
+  },
+  "live": {
+    "testedCodeSha": "a46387996009117b895b100a601718fc8cf81edc",
+    "startedAt": "2026-10-18T14:46:06.239664+00:00",
+    "completedAt": "2026-10-18T14:46:10.284223+00:00",
+    "headless": false,
+    "requestedLimit": 30,
+    "count": 30,
+    "uniqueIds": true,
+    "loadedCount": 40,
+    "scrolls": 1,
+    "stopReason": "requested_limit",
+    "hasMore": true,
+    "elapsedMs": 3179,
+    "boundedRead": true,
+    "noAccountWrites": true
+  },
+  "scope": "No account writes, CAPTCHA bypass, new request path or change to platform payloads."
+}
